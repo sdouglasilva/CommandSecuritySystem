@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>Dispositivos</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+
+<body>
+  <div class="container mt-5">
+    <h1>Dispositivos</h1>
+    <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createDeviceModal">Adicionar Dispositivo</button>
+    <div id="devices-list" class="list-group"></div>
+  </div>
+
+  <!-- Modal para criar dispositivo -->
+  <div class="modal fade" id="createDeviceModal" tabindex="-1" aria-labelledby="createDeviceModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="createDeviceModalLabel">Criar Dispositivo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="createDeviceForm" enctype="multipart/form-data">
+            <div class="mb-3">
+              <label for="deviceType" class="form-label">Tipo</label>
+              <select class="form-select" id="deviceType" required>
+                <option value="" disabled selected>Selecione um tipo</option>
+                <option value="Camera">Câmera</option>
+                <option value="Sensor">Sensor</option>
+                <option value="Alarme">Alarme</option>
+                <option value="Trava">Trava</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="deviceDescription" class="form-label">Descrição</label>
+              <input type="text" class="form-control" id="deviceDescription" required>
+            </div>
+            <div class="mb-3">
+              <label for="deviceImage" class="form-label">Imagem</label>
+              <input type="file" class="form-control" id="deviceImage" accept="image/*">
+            </div>
+            <button type="submit" class="btn btn-primary">Criar</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const apiUrl = 'http://localhost:8000/';
+
+    function loadDevices() {
+      $.get(`${apiUrl}/items/`, function (data) {
+        $('#devices-list').empty();
+        data.forEach(device => {
+          $('#devices-list').append(`
+            <a href="#" class="list-group-item list-group-item-action" data-id="${device.id}">
+              <h5 class="mb-1">${device.tipo}</h5>
+              <p class="mb-1">${device.descricao}</p>
+              ${device.imagem ? `<img src="${device.imagem}" alt="Imagem" class="img-thumbnail mt-2" style="max-width: 100px;">` : ''}
+              <button class="btn btn-danger btn-sm float-end delete-btn" data-id="${device.id}">Excluir</button>
+            </a>
+          `);
+        });
+      });
+    }
+
+    // Função para criar dispositivo
+    $('#createDeviceForm').on('submit', function (e) {
+      e.preventDefault();
+
+      const formData = new FormData(this);
+
+      $.ajax({
+        url: `${apiUrl}/items/`,
+        method: 'POST',
+        processData: false,
+        contentType: false,
+        data: formData,
+        success: function () {
+          $('#createDeviceModal').modal('hide');
+          loadDevices();
+        },
+        error: function (xhr) {
+          alert('Erro: ' + xhr.responseText);
+        }
+      });
+    });
+
+    // Função para excluir dispositivo
+    $(document).on('click', '.delete-btn', function () {
+      const id = $(this).data('id');
+      $.ajax({
+        url: `${apiUrl}/devices/${id}/`,
+        method: 'DELETE',
+        success: function () {
+          loadDevices();
+        },
+        error: function (xhr) {
+          alert('Erro: ' + xhr.responseText);
+        }
+      });
+    });
+
+    $(document).ready(function () {
+      loadDevices();
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
